@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Persistence Test</title>
+</head>
+<body>
+    <h1>Auth State Persistence Test</h1>
+    <div id="result"></div>
+    <script>
+        // Simulate the auth check
+        const token = localStorage.getItem('token');
+        const resultDiv = document.getElementById('result');
+        
+        if (!token) {
+            resultDiv.innerHTML = '<p style="color: red;">No token found - user would be redirected to login</p>';
+        } else {
+            // Decode JWT
+            try {
+                const parts = token.split('.');
+                const payload = parts[1];
+                const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+                const pad = '='.repeat((4 - base64.length % 4) % 4);
+                const decoded = JSON.parse(atob(base64 + pad));
+                
+                const now = Date.now() / 1000;
+                if (now > decoded.exp) {
+                    resultDiv.innerHTML = '<p style="color: orange;">Token expired - user would be logged out</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: green;">Token valid - user remains logged in</p>';
+                    resultDiv.innerHTML += '<p>User: ' + decoded.email + '</p>';
+                    resultDiv.innerHTML += '<p>Expires: ' + new Date(decoded.exp * 1000).toLocaleString() + '</p>';
+                }
+            } catch (e) {
+                resultDiv.innerHTML = '<p style="color: red;">Invalid token format</p>';
+            }
+        }
+    </script>
+</body>
+</html>

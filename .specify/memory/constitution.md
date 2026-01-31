@@ -1,55 +1,157 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- SYNC IMPACT REPORT
+Version change: N/A -> 1.0.0
+Modified principles: None (new constitution)
+Added sections: All sections from user input
+Removed sections: Template placeholder sections
+Templates requiring updates:
+  - .specify/templates/plan-template.md ✅ updated
+  - .specify/templates/spec-template.md ✅ updated
+  - .specify/templates/tasks-template.md ✅ updated
+  - .specify/templates/commands/*.md ⚠ pending
+Follow-up TODOs: None
+-->
+
+# Hackathon II — Evolution of Todo Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Spec-First Development
+No implementation may begin without a written specification. Specs are the single source of truth. Code must strictly follow specs. If behavior is unclear → update spec before coding.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Zero Manual Coding Rule
+Human must not write application code manually. All code must be generated via Claude Code or AI agents. Only specs, prompts, and architecture definitions may be written by human.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Phase Isolation Principle
+Each phase must only implement features allowed by that phase. No future-phase features allowed prematurely. Backward compatibility must be preserved.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Deterministic Architecture
+Same spec must always produce same behavior. Avoid ambiguous logic. Prefer explicit contracts over assumptions.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. AI-Native Design
+Treat AI agents as first-class system components. MCP tools, Agents SDK, and ChatKit must be treated as production interfaces. Agent behavior must be governed by written rules.
 
-### [PRINCIPLE_6_NAME]
+### VI. Cloud-Native Readiness
+Every service must be container-ready. Stateless services preferred. Externalize configuration via environment variables. Design for horizontal scalability.
 
+## Engineering Standards
 
-[PRINCIPLE__DESCRIPTION]
+### I. Code Quality
+Follow clean architecture principles. Separation of concerns is mandatory. Modular folder structure required. No hardcoded secrets.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### II. API Design
+REST endpoints must be predictable and consistent. Use proper HTTP status codes. All protected endpoints require authentication. User isolation is mandatory.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Database Discipline
+Every schema change must be documented in specs. Migrations must be reproducible. No direct DB logic inside UI layer.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### IV. Security Baseline
+JWT authentication required from Phase II onward. Secrets stored in environment variables. No tokens in frontend localStorage without encryption. Backend must verify identity independently.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Observability Ready
+All services must log important actions. Errors must be human readable. Phase IV+ must support monitoring hooks.
+
+## Spec Structure Rules
+
+Every feature spec MUST include:
+
+- Purpose
+- User Stories
+- Functional Requirements
+- Acceptance Criteria
+- Edge Cases
+- API Contracts (if applicable)
+- Data Model Impact
+- Error Handling Behavior
+
+## Workflow Enforcement
+
+Mandatory Workflow:
+
+1. Write or update spec
+2. Validate spec completeness
+3. Generate plan from spec
+4. Break into implementation tasks
+5. Generate code via Claude Code
+6. Test behavior
+7. Iterate spec if mismatch found
+
+Skipping steps is not allowed.
+
+## Phase Consistency Rules
+
+Phase I (CLI):
+- In-memory only
+- No database
+- No auth
+- No network calls
+
+Phase II (Web):
+- Persistent database
+- REST APIs
+- Better Auth JWT integration
+- Multi-user isolation
+
+Phase III (AI Chatbot):
+- MCP tools only for task actions
+- Stateless server
+- Conversation persistence
+- Agent controlled via tool contracts
+
+Phase IV (Kubernetes):
+- Dockerized services
+- Helm charts
+- Minikube deployment
+- AI-assisted DevOps allowed
+
+Phase V (Cloud + Kafka):
+- Event-driven architecture
+- Dapr integration
+- Kafka-based messaging
+- Cloud deployment with CI/CD
+
+## Quality Gates
+
+A phase is considered COMPLETE only when:
+
+- All specs implemented
+- All acceptance criteria satisfied
+- No manual code present
+- Authentication works correctly (Phase II+)
+- Agent tools function correctly (Phase III+)
+- Deployment reproducible (Phase IV+)
+- Events flow correctly (Phase V)
+
+## Success Criteria
+
+Final project must:
+
+- Fully follow spec-driven methodology
+- Pass functional testing
+- Be deployable end-to-end
+- Demonstrate AI-native architecture
+- Meet hackathon rubric requirements
+- Be production-architecture aligned
+
+## Enforcement Mode
+
+When generating code:
+
+- Prefer correctness over speed
+- Reject ambiguous instructions
+- Ask for spec clarification if required
+- Never invent missing requirements
+- Never bypass architecture rules
+
+This constitution applies globally to ALL phases.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+When generating code:
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- Prefer correctness over speed
+- Reject ambiguous instructions
+- Ask for spec clarification if required
+- Never invent missing requirements
+- Never bypass architecture rules
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
