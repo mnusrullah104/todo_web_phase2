@@ -1,7 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import SQLModel
 from .api import router as api_router
 from .config.settings import get_settings
+from .database.session import engine
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -11,11 +18,23 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database tables on startup"""
+    try:
+        logger.info("Creating database tables...")
+        SQLModel.metadata.create_all(engine)
+        logger.info("Database tables created successfully!")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {str(e)}")
+        raise
+
 # Configure CORS - dynamically build allowed origins
 allowed_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
+    "https://localhost:3000",
 ]
 
 # Add production frontend URLs from environment
@@ -23,6 +42,7 @@ if settings.frontend_url:
     # Support comma-separated list of URLs
     frontend_urls = [url.strip() for url in settings.frontend_url.split(",")]
     allowed_origins.extend(frontend_urls)
+    logger.info(f"CORS allowed origins: {allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +50,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include API routes
