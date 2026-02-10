@@ -6,6 +6,9 @@ from .config.settings import get_settings
 from .database.session import engine
 import logging
 
+# Import all models to register them with SQLModel metadata
+from .models import User, Task, Conversation, Message  # noqa: F401
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

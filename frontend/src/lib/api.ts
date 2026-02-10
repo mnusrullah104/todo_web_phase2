@@ -3,9 +3,9 @@ import axios from 'axios';
 
 // Get base URL from environment variable
 const getBaseURL = (): string => {
-  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const baseURL = process.env.NEXT_PUBLIC_API_URL;
   if (!baseURL) {
-    console.error('NEXT_PUBLIC_API_BASE_URL is not set.');
+    console.error('NEXT_PUBLIC_API_URL is not set.');
     // In a development environment, you might want to default to a local URL
     // but for production, it's better to fail fast.
     return 'http://localhost:8001'; // Fallback for local dev if not set

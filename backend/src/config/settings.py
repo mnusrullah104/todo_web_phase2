@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Frontend URL for CORS (can be comma-separated list)
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
+    # Cohere API configuration (Phase III - AI Chatbot)
+    cohere_api_key: str = os.getenv("COHERE_API_KEY", "")
+
     if SETTINGS_MODULE == "pydantic":
         class Config:
             env_file = ".env"
