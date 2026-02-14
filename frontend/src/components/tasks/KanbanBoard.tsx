@@ -14,14 +14,15 @@ import Card from '@/components/ui/Card';
 interface KanbanBoardProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, completed: boolean) => void;
-  onTaskDelete: (taskId: string) => void;
+  onTaskDelete: () => void; // Changed to callback that handles modal
   taskPriorities: Record<string, Priority>;
+  openDeleteModal?: (taskId: string, taskTitle: string) => void; // New prop for opening modal
 }
 
 interface KanbanTaskCardProps {
   task: Task;
   priority: Priority;
-  onDelete: (taskId: string) => void;
+  onDelete: (taskId: string, taskTitle: string) => void;
 }
 
 function KanbanTaskCard({ task, priority, onDelete }: KanbanTaskCardProps) {
@@ -62,7 +63,7 @@ function KanbanTaskCard({ task, priority, onDelete }: KanbanTaskCardProps) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onDelete(task.id);
+            onDelete(task.id, task.title);
           }}
           className="ml-2 p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
         >
@@ -95,7 +96,7 @@ interface KanbanColumnProps {
   title: string;
   tasks: Task[];
   taskPriorities: Record<string, Priority>;
-  onTaskDelete: (taskId: string) => void;
+  onTaskDelete: (taskId: string, taskTitle: string) => void;
   count: number;
   color: string;
 }
@@ -137,7 +138,7 @@ function KanbanColumn({ id, title, tasks, taskPriorities, onTaskDelete, count, c
   );
 }
 
-export default function KanbanBoard({ tasks, onTaskUpdate, onTaskDelete, taskPriorities }: KanbanBoardProps) {
+export default function KanbanBoard({ tasks, onTaskUpdate, onTaskDelete, openDeleteModal, taskPriorities }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -150,6 +151,13 @@ export default function KanbanBoard({ tasks, onTaskUpdate, onTaskDelete, taskPri
 
   const todoTasks = tasks.filter(t => !t.completed);
   const doneTasks = tasks.filter(t => t.completed);
+
+  // Use openDeleteModal if provided, otherwise fallback to onTaskDelete
+  const handleDelete = openDeleteModal || ((taskId: string, taskTitle: string) => {
+    if (confirm(`Delete "${taskTitle}"?`)) {
+      onTaskDelete();
+    }
+  });
 
   const handleDragStart = (event: DragEndEvent) => {
     setActiveId(event.active.id as string);
@@ -207,7 +215,7 @@ export default function KanbanBoard({ tasks, onTaskUpdate, onTaskDelete, taskPri
             title="To Do"
             tasks={todoTasks}
             taskPriorities={taskPriorities}
-            onTaskDelete={onTaskDelete}
+            onTaskDelete={handleDelete}
             count={todoTasks.length}
             color="bg-amber-500"
           />
@@ -219,7 +227,7 @@ export default function KanbanBoard({ tasks, onTaskUpdate, onTaskDelete, taskPri
             title="Done"
             tasks={doneTasks}
             taskPriorities={taskPriorities}
-            onTaskDelete={onTaskDelete}
+            onTaskDelete={handleDelete}
             count={doneTasks.length}
             color="bg-green-500"
           />

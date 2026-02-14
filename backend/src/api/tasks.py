@@ -3,17 +3,20 @@ from sqlmodel import Session, select
 from typing import List
 import uuid
 from datetime import datetime
+import logging
 
 from ..models.task import Task, TaskCreate, TaskUpdate, TaskPatchComplete, TaskRead
 from ..schemas.task import TaskListResponse
 from ..auth.jwt import get_current_user
 from ..database.session import get_session
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["tasks"])
+
 
 @router.get("/tasks", response_model=List[TaskRead])
 async def get_tasks(
-    user_id: str = None,  # This will be extracted from the path via the prefix
+    user_id: str = None,
     current_user_id: uuid.UUID = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -21,24 +24,36 @@ async def get_tasks(
     Get all tasks for a specific user from database.
     Validates that the user_id in the URL matches the authenticated user.
     """
-    # Validate that the user_id in URL matches the authenticated user
-    if str(current_user_id) != user_id:
+    try:
+        # Validate that the user_id in URL matches the authenticated user
+        if str(current_user_id) != user_id:
+            logger.warning(f"Unauthorized access attempt: user {current_user_id} tried to access tasks for {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access this user's tasks"
+            )
+
+        # Query database for user's tasks
+        statement = select(Task).where(Task.user_id == current_user_id)
+        tasks = session.exec(statement).all()
+
+        logger.info(f"Retrieved {len(tasks)} tasks for user {current_user_id}")
+        return tasks
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving tasks for user {current_user_id}: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this user's tasks"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve tasks. Please try again."
         )
-
-    # Query database for user's tasks
-    statement = select(Task).where(Task.user_id == current_user_id)
-    tasks = session.exec(statement).all()
-
-    return tasks
 
 
 @router.post("/tasks", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
 async def create_task(
     task_create: TaskCreate,
-    user_id: str = None,  # This will be extracted from the path via the prefix
+    user_id: str = None,
     current_user_id: uuid.UUID = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -46,28 +61,54 @@ async def create_task(
     Create a new task in database for the specified user.
     Validates that the user_id in the URL matches the authenticated user.
     """
-    # Validate that the user_id in URL matches the authenticated user
-    if str(current_user_id) != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create tasks for this user"
+    try:
+        # Validate that the user_id in URL matches the authenticated user
+        if str(current_user_id) != user_id:
+            logger.warning(f"Unauthorized task creation attempt by user {current_user_id} for {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to create tasks for this user"
+            )
+
+        # Validate input
+        if not task_create.title or len(task_create.title.strip()) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Task title cannot be empty"
+            )
+
+        if len(task_create.title) > 255:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Task title cannot exceed 255 characters"
+            )
+
+        # Create new task in database
+        new_task = Task(
+            user_id=current_user_id,
+            title=task_create.title.strip(),
+            description=task_create.description.strip() if task_create.description else None,
+            completed=task_create.completed if task_create.completed is not None else False,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
         )
 
-    # Create new task in database
-    new_task = Task(
-        user_id=current_user_id,
-        title=task_create.title,
-        description=task_create.description,
-        completed=task_create.completed if task_create.completed is not None else False,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
+        session.add(new_task)
+        session.commit()
+        session.refresh(new_task)
 
-    session.add(new_task)
-    session.commit()
-    session.refresh(new_task)
+        logger.info(f"Created task {new_task.id} for user {current_user_id}")
+        return new_task
 
-    return new_task
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error creating task for user {current_user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create task. Please try again."
+        )
 
 
 @router.get("/tasks/{task_id}", response_model=TaskRead)
@@ -164,7 +205,7 @@ async def update_task(
 @router.delete("/tasks/{task_id}")
 async def delete_task(
     task_id: str,
-    user_id: str = None,  # This will be extracted from the path via the prefix
+    user_id: str = None,
     current_user_id: uuid.UUID = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -172,35 +213,50 @@ async def delete_task(
     Delete a specific task from database for the specified user.
     Validates that the user_id in the URL matches the authenticated user.
     """
-    # Validate that the user_id in URL matches the authenticated user
-    if str(current_user_id) != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this user's tasks"
-        )
-
-    # Query database for task with ownership verification
     try:
-        task_uuid = uuid.UUID(task_id)
-    except ValueError:
+        # Validate that the user_id in URL matches the authenticated user
+        if str(current_user_id) != user_id:
+            logger.warning(f"Unauthorized delete attempt by user {current_user_id} for {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete this user's tasks"
+            )
+
+        # Validate task_id format
+        try:
+            task_uuid = uuid.UUID(task_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid task ID format"
+            )
+
+        # Query database for task with ownership verification
+        statement = select(Task).where(Task.id == task_uuid, Task.user_id == current_user_id)
+        task = session.exec(statement).first()
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found"
+            )
+
+        # Delete the task
+        session.delete(task)
+        session.commit()
+
+        logger.info(f"Deleted task {task_id} for user {current_user_id}")
+        return {"success": True, "message": "Task deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error deleting task {task_id} for user {current_user_id}: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid task ID format"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete task. Please try again."
         )
-
-    statement = select(Task).where(Task.id == task_uuid, Task.user_id == current_user_id)
-    task = session.exec(statement).first()
-
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task not found"
-        )
-
-    session.delete(task)
-    session.commit()
-
-    return {"message": "Task deleted successfully"}
 
 
 @router.patch("/tasks/{task_id}/complete")

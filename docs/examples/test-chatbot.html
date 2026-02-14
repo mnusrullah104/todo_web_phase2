@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        #chatTest {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 5px;
+            border: 1px solid #e5e7eb;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #response {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #e5e7eb;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Phase 3 Chatbot Test Page</h1>
+
+        <div id="backendStatus" class="status info">Checking backend...</div>
+        <div id="frontendStatus" class="status info">Checking frontend...</div>
+        <div id="userIdStatus" class="status info">Checking userId...</div>
+
+        <h2>Quick Setup</h2>
+        <button onclick="setUserId()">1. Set User ID</button>
+        <button onclick="checkStatus()">2. Check Status</button>
+        <button onclick="openApp()">3. Open App</button>
+
+        <div id="chatTest">
+            <h3>Test Chat Endpoint</h3>
+            <input type="text" id="messageInput" placeholder="Type a message (e.g., 'Add a task to buy groceries')" value="Add a task to buy groceries">
+            <button onclick="testChat()">Send Test Message</button>
+            <div id="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8001';
+        const FRONTEND_URL = 'http://localhost:3000';
+        const TEST_USER_ID = '123e4567-e89b-12d3-a456-426614174000';
+
+        async function checkBackend() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                document.getElementById('backendStatus').className = 'status success';
+                document.getElementById('backendStatus').textContent = `✅ Backend: ${data.status} (v${data.version})`;
+                return true;
+            } catch (error) {
+                document.getElementById('backendStatus').className = 'status error';
+                document.getElementById('backendStatus').textContent = `❌ Backend: Not responding - ${error.message}`;
+                return false;
+            }
+        }
+
+        async function checkFrontend() {
+            try {
+                const response = await fetch(FRONTEND_URL);
+                if (response.ok) {
+                    document.getElementById('frontendStatus').className = 'status success';
+                    document.getElementById('frontendStatus').textContent = '✅ Frontend: Running on port 3000';
+                    return true;
+                }
+            } catch (error) {
+                document.getElementById('frontendStatus').className = 'status error';
+                document.getElementById('frontendStatus').textContent = `❌ Frontend: Not responding - ${error.message}`;
+                return false;
+            }
+        }
+
+        function checkUserId() {
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+                document.getElementById('userIdStatus').className = 'status success';
+                document.getElementById('userIdStatus').textContent = `✅ User ID: ${userId}`;
+                return true;
+            } else {
+                document.getElementById('userIdStatus').className = 'status error';
+                document.getElementById('userIdStatus').textContent = '❌ User ID: Not set (click "Set User ID" button)';
+                return false;
+            }
+        }
+
+        function setUserId() {
+            localStorage.setItem('userId', TEST_USER_ID);
+            alert('✅ User ID set successfully!\n\nNow click "Check Status" to verify.');
+            checkUserId();
+        }
+
+        async function checkStatus() {
+            await checkBackend();
+            await checkFrontend();
+            checkUserId();
+        }
+
+        function openApp() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                alert('⚠️ Please set User ID first (click "Set User ID" button)');
+                return;
+            }
+            window.open(FRONTEND_URL, '_blank');
+        }
+
+        async function testChat() {
+            const message = document.getElementById('messageInput').value;
+            const responseDiv = document.getElementById('response');
+
+            if (!message.trim()) {
+                alert('Please enter a message');
+                return;
+            }
+
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                alert('⚠️ Please set User ID first');
+                return;
+            }
+
+            responseDiv.textContent = 'Sending message...';
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/${userId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.textContent = `✅ SUCCESS!\n\nResponse: ${data.response}\n\nConversation ID: ${data.conversation_id}\n\nTool Calls: ${JSON.stringify(data.tool_calls, null, 2)}`;
+                } else {
+                    responseDiv.textContent = `❌ ERROR!\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                responseDiv.textContent = `❌ NETWORK ERROR!\n\n${error.message}`;
+            }
+        }
+
+        // Auto-check status on load
+        window.onload = checkStatus;
+    </script>
+</body>
+</html>

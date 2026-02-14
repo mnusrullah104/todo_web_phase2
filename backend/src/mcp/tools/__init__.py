@@ -1,6 +1,6 @@
 """Tool definitions for Phase III AI Chatbot Integration.
 
-Defines all 5 MCP tools in Cohere ToolV2 format for the TodoChatAgent.
+Defines all 6 MCP tools in Cohere ToolV2 format for the TodoChatAgent.
 """
 import cohere
 from typing import List
@@ -123,6 +123,25 @@ def get_tool_definitions() -> List[cohere.ToolV2]:
                         }
                     },
                     "required": ["task_id"]
+                }
+            }
+        ),
+
+        # Tool 6: navigate
+        cohere.ToolV2(
+            type="function",
+            function={
+                "name": "navigate",
+                "description": "Navigate to a different page in the application. Use this when the user wants to go to, open, visit, or navigate to a page. Available pages: dashboard, tasks, calendar, analytics, settings, evaluations.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "page": {
+                            "type": "string",
+                            "description": "Name of the page to navigate to (e.g., 'dashboard', 'tasks', 'calendar', 'analytics', 'settings', 'evaluations')"
+                        }
+                    },
+                    "required": ["page"]
                 }
             }
         ),

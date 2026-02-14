@@ -18,6 +18,7 @@ from ..mcp.tools.list_tasks import list_tasks_impl
 from ..mcp.tools.complete_task import complete_task_impl
 from ..mcp.tools.delete_task import delete_task_impl
 from ..mcp.tools.update_task import update_task_impl
+from ..mcp.tools.navigate import navigate
 from ..agent.cohere_client import get_cohere_client
 from ..agent.todo_agent import TodoChatAgent
 from ..models.message import MessageRole
@@ -107,12 +108,13 @@ async def chat(
         conversation_service = ConversationService(session)
         tool_executor = ToolExecutor(session, current_user_id)
 
-        # Register all 5 tools (Phase III - Complete)
+        # Register all 6 tools (Phase III - Complete + Navigation)
         tool_executor.register_tool("add_task", add_task_impl)
         tool_executor.register_tool("list_tasks", list_tasks_impl)
         tool_executor.register_tool("complete_task", complete_task_impl)
         tool_executor.register_tool("delete_task", delete_task_impl)
         tool_executor.register_tool("update_task", update_task_impl)
+        tool_executor.register_tool("navigate", navigate)
 
         # Get Cohere client
         try:

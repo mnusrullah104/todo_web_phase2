@@ -6,8 +6,10 @@ import { motion } from 'framer-motion';
 import { Task } from '@/lib/types';
 import { taskApi } from '@/lib/api';
 import { useTaskMetadata, Priority } from '@/hooks/useTaskMetadata';
+import { useToast } from '@/contexts/ToastContext';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import KanbanBoard from './KanbanBoard';
 
 interface TaskListProps {
@@ -15,14 +17,26 @@ interface TaskListProps {
 }
 
 export default function TaskList({ userId }: TaskListProps) {
+  const toast = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'list' | 'kanban'>('table');
   const [priorityFilter, setPriorityFilter] = useState<'all' | Priority>('all');
   const { taskPriorities, setPriority } = useTaskMetadata();
+
+  // Delete confirmation modal
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    taskId: string | null;
+    taskTitle: string;
+  }>({
+    isOpen: false,
+    taskId: null,
+    taskTitle: ''
+  });
 
   useEffect(() => {
     loadTasks();
@@ -31,10 +45,11 @@ export default function TaskList({ userId }: TaskListProps) {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const response = await taskApi.getTasks(userId);
-      setTasks(response.data);
-    } catch (err) {
-      setError('Failed to load tasks');
+      const data = await taskApi.getTasks(userId);
+      setTasks(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load tasks');
+      setTasks([]);
       console.error('Error loading tasks:', err);
     } finally {
       setLoading(false);
@@ -43,35 +58,63 @@ export default function TaskList({ userId }: TaskListProps) {
 
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
     try {
+      setActionLoading(taskId);
       await taskApi.toggleTaskCompletion(userId, taskId, completed);
+
+      // Optimistic update
       setTasks(tasks.map(task =>
         task.id === taskId ? { ...task, completed, updated_at: new Date() } : task
       ));
-    } catch (err) {
-      setError('Failed to update task');
+
+      toast.success(completed ? 'Task marked as complete!' : 'Task marked as incomplete');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update task');
       console.error('Error updating task:', err);
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const handleTaskDelete = async (taskId: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+  const openDeleteModal = (taskId: string, taskTitle: string) => {
+    setDeleteModal({
+      isOpen: true,
+      taskId,
+      taskTitle
+    });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({
+      isOpen: false,
+      taskId: null,
+      taskTitle: ''
+    });
+  };
+
+  const handleTaskDelete = async () => {
+    if (!deleteModal.taskId) return;
 
     try {
-      await taskApi.deleteTask(userId, taskId);
-      setTasks(tasks.filter(task => task.id !== taskId));
-    } catch (err) {
-      setError('Failed to delete task');
+      setActionLoading('delete');
+      await taskApi.deleteTask(userId, deleteModal.taskId);
+      setTasks(tasks.filter(task => task.id !== deleteModal.taskId));
+      toast.success('Task deleted successfully!');
+      closeDeleteModal();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete task');
       console.error('Error deleting task:', err);
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  // Statistics
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.completed).length;
+  // Statistics - with safety checks
+  const totalTasks = tasks?.length || 0;
+  const completedTasks = tasks?.filter(t => t.completed).length || 0;
   const activeTasks = totalTasks - completedTasks;
 
   // Filtered and searched tasks
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks?.filter(task => {
     const matchesFilter =
       filter === 'all' ? true :
       filter === 'active' ? !task.completed :
@@ -85,7 +128,7 @@ export default function TaskList({ userId }: TaskListProps) {
     const matchesPriority = priorityFilter === 'all' || taskPriority === priorityFilter;
 
     return matchesFilter && matchesSearch && matchesPriority;
-  });
+  }) || [];
 
   if (loading) {
     return (
@@ -118,13 +161,6 @@ export default function TaskList({ userId }: TaskListProps) {
           New Task
         </Link>
       </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </div>
-      )}
 
       {/* Filters and Search */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -265,6 +301,7 @@ export default function TaskList({ userId }: TaskListProps) {
           tasks={filteredTasks}
           onTaskUpdate={handleTaskToggle}
           onTaskDelete={handleTaskDelete}
+          openDeleteModal={openDeleteModal}
           taskPriorities={taskPriorities}
         />
       ) : viewMode === 'table' ? (
@@ -353,8 +390,9 @@ export default function TaskList({ userId }: TaskListProps) {
                           </svg>
                         </Link>
                         <button
-                          onClick={() => handleTaskDelete(task.id)}
-                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          onClick={() => openDeleteModal(task.id, task.title)}
+                          disabled={actionLoading !== null}
+                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                           title="Delete"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,8 +451,9 @@ export default function TaskList({ userId }: TaskListProps) {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleTaskDelete(task.id)}
-                  className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  onClick={() => openDeleteModal(task.id, task.title)}
+                  disabled={actionLoading !== null}
+                  className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -425,6 +464,19 @@ export default function TaskList({ userId }: TaskListProps) {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleTaskDelete}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${deleteModal.taskTitle}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isLoading={actionLoading === 'delete'}
+        variant="danger"
+      />
     </div>
   );
 }

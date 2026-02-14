@@ -4,13 +4,17 @@ from sqlmodel import SQLModel
 from .api import router as api_router
 from .config.settings import get_settings
 from .database.session import engine
+from .middleware.error_handler import setup_error_handlers
 import logging
 
 # Import all models to register them with SQLModel metadata
 from .models import User, Task, Conversation, Message  # noqa: F401
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
@@ -20,6 +24,9 @@ app = FastAPI(
     description="A production-ready multi-user Todo Web Application with authentication and task management",
     version="1.0.0",
 )
+
+# Setup global error handlers
+setup_error_handlers(app)
 
 @app.on_event("startup")
 async def startup_event():
