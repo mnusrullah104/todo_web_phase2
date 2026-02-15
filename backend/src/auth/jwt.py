@@ -16,13 +16,15 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Truncate password to 72 bytes (bcrypt limitation)
-    truncated_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    # Truncate password to 72 characters (bcrypt limitation)
+    # Using character limit instead of byte limit for simplicity
+    truncated_password = plain_password[:72]
     return pwd_context.verify(truncated_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    # Truncate password to 72 bytes (bcrypt limitation)
-    truncated_password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    # Truncate password to 72 characters (bcrypt limitation)
+    # Using character limit instead of byte limit for simplicity
+    truncated_password = password[:72]
     return pwd_context.hash(truncated_password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
