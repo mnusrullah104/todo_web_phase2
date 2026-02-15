@@ -8,8 +8,8 @@ import axios, { AxiosError } from 'axios';
 const getBaseURL = (): string => {
   const baseURL = process.env.NEXT_PUBLIC_API_URL;
   if (!baseURL) {
-    // Default to Hugging Face Space API
-    return 'https://mnusrulah104-todoapp-chatbot.hf.space';
+    // Default to new Hugging Face Space API
+    return 'https://mnusrulah104-todo-chatboat-phase3.hf.space';
   }
   return baseURL;
 };

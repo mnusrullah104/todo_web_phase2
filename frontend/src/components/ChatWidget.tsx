@@ -21,7 +21,7 @@ interface ChatWidgetProps {
 
 export default function ChatWidget({
   userId,
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mnusrulah104-todoapp-chatbot.hf.space'
+  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mnusrulah104-todo-chatboat-phase3.hf.space'
 }: ChatWidgetProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);

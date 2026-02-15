@@ -25,7 +25,7 @@ export interface ChatError {
   detail: string;
 }
 
-const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mnusrulah104-todoapp-chatbot.hf.space';
+const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mnusrulah104-todo-chatboat-phase3.hf.space';
 
 /**
  * Send a chat message to the backend.
