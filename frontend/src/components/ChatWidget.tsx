@@ -72,10 +72,14 @@ export default function ChatWidget({
     setIsLoading(true);
 
     try {
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+
       const response = await fetch(`${apiUrl}/api/${userId}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
           message: inputValue,
