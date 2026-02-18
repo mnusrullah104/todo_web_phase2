@@ -1,0 +1,147 @@
+Phase III Todo AI Chatbot - Clean Project Structure
+====================================================
+
+ROOT DIRECTORY (Clean & Organized)
+├── backend/                    # FastAPI Backend Application
+│   ├── src/
+│   │   ├── agent/             # OpenAI Agents SDK integration
+│   │   ├── api/               # API endpoints
+│   │   ├── auth/              # JWT authentication
+│   │   ├── config/            # Configuration management
+│   │   ├── database/          # Database connection & setup
+│   │   ├── mcp/               # MCP server & tools
+│   │   ├── middleware/        # FastAPI middleware
+│   │   ├── models/            # SQLModel database models
+│   │   ├── schemas/           # Pydantic schemas
+│   │   └── services/          # Business logic services
+│   ├── tests/                 # Backend test suite
+│   └── pyproject.toml         # Python dependencies (UV)
+│
+├── frontend/                   # Next.js 14+ Frontend Application
+│   ├── src/
+│   │   ├── app/               # Next.js App Router pages
+│   │   ├── components/        # React components
+│   │   ├── contexts/          # React contexts
+│   │   ├── hooks/             # Custom React hooks
+│   │   ├── lib/               # Utility libraries
+│   │   ├── services/          # API service layer
+│   │   └── styles/            # Global styles
+│   ├── public/                # Static assets
+│   └── package.json           # Node dependencies
+│
+├── docs/                       # Organized Documentation
+│   ├── deployment/            # Deployment guides
+│   │   ├── DEPLOYMENT_COMPLETE.md
+│   │   ├── DEPLOYMENT_ENV_GUIDE.md
+│   │   ├── HUGGINGFACE_COLLISION_FIX.md
+│   │   ├── HUGGINGFACE_ENV_SETUP.md
+│   │   ├── NEW_SPACE_SETUP_GUIDE.md
+│   │   └── VERCEL_DEPLOYMENT_GUIDE.md
+│   ├── development/           # Development guides
+│   │   └── DATABASE_FIX_GUIDE.md
+│   ├── architecture/          # Architecture documentation
+│   ├── phase3/                # Phase 3 specific docs
+│   ├── reports/               # Status reports
+│   └── research-paper/        # Research documentation
+│
+├── specs/                      # Feature Specifications (SDD)
+│   ├── 001-ai-k12-efficiency/
+│   │   ├── spec.md
+│   │   ├── plan.md
+│   │   ├── tasks.md
+│   │   └── checklists/
+│   ├── 002-todo-web-app/
+│   │   ├── spec.md
+│   │   ├── plan.md
+│   │   ├── tasks.md
+│   │   ├── checklists/
+│   │   └── contracts/
+│   └── 003-ai-chatbot-integration/
+│       ├── spec.md
+│       ├── plan.md
+│       ├── tasks.md
+│       ├── checklists/
+│       └── contracts/
+│
+├── history/                    # Development History
+│   └── prompts/               # Prompt History Records (PHRs)
+│       ├── constitution/      # Constitution-related prompts
+│       ├── general/           # General prompts
+│       ├── 001-ai-k12-efficiency/
+│       ├── 002-todo-web-app/
+│       └── 003-ai-chatbot-integration/
+│
+├── skills/                     # Claude Code Custom Skills
+│   ├── ai_mcp_integrator/     # OpenAI + MCP specialist
+│   ├── cloud_native_devops/   # Docker/K8s specialist
+│   ├── frontend_architect/    # Next.js specialist
+│   ├── python_specialist/     # FastAPI/Python specialist
+│   └── qa_specialist/         # Testing specialist
+│
+├── scripts/                    # Utility Scripts
+│   ├── setup/                 # Setup automation
+│   ├── deployment/            # Deployment automation
+│   └── maintenance/           # Maintenance scripts
+│
+├── .specify/                   # SpecKit Plus Framework
+│   ├── memory/                # Project memory & constitution
+│   ├── templates/             # Document templates
+│   └── scripts/               # SpecKit automation scripts
+│
+├── Configuration Files
+│   ├── .env.example           # Environment variables template
+│   ├── docker-compose.yml     # Docker multi-container setup
+│   ├── Dockerfile             # Backend container definition
+│   ├── vercel.json            # Vercel deployment config
+│   ├── .gitignore             # Git exclusion rules
+│   └── .dockerignore          # Docker exclusion rules
+│
+└── Documentation Files
+    ├── README.md              # Project overview & quick start
+    ├── CLAUDE.md              # Claude Code instructions
+    └── STRUCTURE.md           # This structure documentation
+
+KEY IMPROVEMENTS
+================
+
+✓ Root directory is clean and organized
+✓ All deployment guides consolidated in docs/deployment/
+✓ Development guides in docs/development/
+✓ Clear separation: backend, frontend, docs, specs, history
+✓ Modular structure with single-purpose directories
+✓ Easy navigation and file discovery
+✓ Follows industry best practices
+
+NAVIGATION GUIDE
+================
+
+Starting Point:
+  → README.md - Project overview and setup instructions
+
+Feature Development:
+  → specs/ - Read feature specifications
+  → backend/src/ - Implement backend logic
+  → frontend/src/ - Implement frontend UI
+
+Deployment:
+  → docs/deployment/ - Deployment guides for HuggingFace & Vercel
+  → .env.example - Environment configuration template
+
+Development History:
+  → history/prompts/ - Prompt History Records (PHRs)
+  → specs/*/plan.md - Architecture decisions
+
+Configuration:
+  → docker-compose.yml - Local development setup
+  → vercel.json - Frontend deployment
+  → backend/pyproject.toml - Python dependencies
+  → frontend/package.json - Node dependencies
+
+MAINTENANCE NOTES
+=================
+
+- Keep documentation organized by category
+- Archive old guides when superseded
+- Update STRUCTURE.md when adding new directories
+- Document architectural decisions in specs/*/plan.md
+- Create PHRs for significant development sessions
